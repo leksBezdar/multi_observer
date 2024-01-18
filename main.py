@@ -12,7 +12,7 @@ def main() -> None:
 
     finally:
         print("Stopped doing something")
-        
+
 if __name__ == "__main__":
     print(1) 
     main()

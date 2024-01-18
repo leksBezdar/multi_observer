@@ -16,9 +16,8 @@ def run_script(file_path):
 
 class EventHandler(FileSystemEventHandler):
     def on_modified(self, event: FileSystemEvent):
-        if not event.is_directory and event.src_path.endswith('.py'): # Добавить возможность отслеживать все файлы папок (добавить функционал exclude)
-            
-            if event.src_path.endswith('.py'): 
+        if not event.is_directory:
+            if event.src_path.endswith('.py'): # Добавить возможность отслеживать все файлы папок (добавить функционал exclude)
                 print(f'Файл {event.src_path} был изменен. Перезагружаю...')
                 
                 if event.src_path in file_processes:
@@ -54,12 +53,11 @@ if __name__ == "__main__":
     event_handler = EventHandler()
     observer = Observer()
 
-    handler_added = False
     for root, dirs, files in os.walk(root_path):
         for file in files:
-            if file.endswith(".py") and not handler_added:
+            if file.endswith(".py"):
                 observer.schedule(event_handler, root, recursive=False)
-                handler_added = True
+                break
 
 
     observer.start()

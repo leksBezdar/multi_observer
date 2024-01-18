@@ -1,2 +1,2 @@
 [Files]
-Paths:
+Paths: observer/main.py, main.py
