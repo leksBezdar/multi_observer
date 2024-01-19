@@ -1,72 +1,34 @@
-import subprocess
-import time
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
 import os
-import multiprocessing
-import psutil
+
+from watchdog.observers import Observer
+
+from event_handler import EventHandler
+from config import ConfigManager
 
 
-file_processes: dict[str, multiprocessing.Process] = {}  # Словарь для отслеживания процессов по файлам
-
-
-def run_script(file_path):
-    abs_path = os.path.abspath(file_path)
-    subprocess.run(['python', abs_path])
-
-class EventHandler(FileSystemEventHandler):
-    def on_modified(self, event: FileSystemEvent):
-        if not event.is_directory:
-            if event.src_path.endswith('.py'): # Добавить возможность отслеживать все файлы папок (добавить функционал exclude)
-                print(f'Файл {event.src_path} был изменен. Перезагружаю...')
-                
-                if event.src_path in file_processes:
-                    old_process = file_processes[event.src_path]
-                    
-                    if old_process.is_alive():
-                        print(f'Завершение предыдущих процессов файла {event.src_path}')
-                        terminate_process_and_children(old_process)
-                        
-                new_process = multiprocessing.Process(target=run_script, args=(event.src_path,))
-                new_process.start()
-                file_processes[event.src_path] = new_process
-
-
-def terminate_process_and_children(process: multiprocessing.Process):
-    try:
-        parent = psutil.Process(process.pid)
-        children = parent.children(recursive=True)
-        
-        for child in children:
-            child.terminate()
-            
-        psutil.wait_procs(children, timeout=5)
-        process.terminate()
-        process.join()
-        
-    except Exception as e:
-        print(f"Ошибка в завершении процесса: {e}")
-
-
-if __name__ == "__main__":
-    root_path = '.'  # Отслеживаемая директория (вынести в настраиваемый конфиг)
-    event_handler = EventHandler()
+def start_watching_files(config_file='config.txt'):
+    config_manager = ConfigManager(config_file)
     observer = Observer()
 
-    for root, dirs, files in os.walk(root_path):
-        for file in files:
-            if file.endswith(".py"):
-                observer.schedule(event_handler, root, recursive=False)
-                break
-
-
-    observer.start()
-
     try:
-        observer.join()
-    except KeyboardInterrupt:
-        observer.stop()
-        
-    except Exception as e:
-        print(f"Непредвиденная ошибка запуска обсервера {e}")
+        folders_to_watch = config_manager.get_folder_paths()
 
+        for folder_path in folders_to_watch:
+            observer.schedule(EventHandler(config_manager), os.path.dirname(folder_path), recursive=False)
+
+        observer.start()
+
+        try:
+            while True:
+                observer.join(1)
+
+        except KeyboardInterrupt:
+            print("Observer shutdown initiated by keyboard interrupt")
+
+    except Exception as e:
+        print(f"An unexpected error starting the observer: {e}")
+
+    finally:
+        observer.stop()
+        observer.join()
+        print("Observer shutdown completed")

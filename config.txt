@@ -1,2 +1,3 @@
-[Files]
-Paths: observer/main.py, main.py
+[Folders]
+Paths: test_app/, test_app2/
+Exception_files: test_app\exception_main.py
