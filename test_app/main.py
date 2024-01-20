@@ -3,7 +3,7 @@ import time
 def main() -> None:
     try:
         while True:
-            print("Doing some useful stuff...")
+            logger.error("Doing some useful stuff...")
             time.sleep(5)
 
     except KeyboardInterrupt:
