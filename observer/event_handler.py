@@ -1,9 +1,10 @@
 import os
 import psutil
+import inspect
 
 import subprocess
 import multiprocessing
-
+from loguru import logger
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 
 from config import ConfigManager
@@ -17,29 +18,29 @@ class EventHandler(FileSystemEventHandler):
         super().__init__()
         self.config_manager = config_manager
 
-    @classmethod
     def on_modified(self, event: FileSystemEvent) -> None:
         if not event.is_directory:
             file_path = event.src_path
+            logger.debug(f"file {file_path} modified")
 
             # Пропуск исключенных файлов
             if self._is_exception_file(file_path):
+                logger.debug(f"file {file_path} is excluded")
                 return
 
-            print(f'File {file_path} has been modified. Reloading...')
+            logger.debug(f'File {file_path} has been modified. Reloading...')
 
             if file_path in file_processes:
                 old_process = file_processes[file_path]
 
                 if old_process.is_alive():
-                    print(f'Terminating previous processes for file {file_path}')
+                    logger.debug(f'Terminating previous processes for file {file_path}')
                     self._kill_associated_processes(old_process)
 
             self._set_new_process(file_path)
 
-    @classmethod
-    def _set_new_process(cls, file_path: str) -> None:  
-        new_process = multiprocessing.Process(target=cls._run_script, args=(file_path,))
+    def _set_new_process(self, file_path: str) -> None:  
+        new_process = multiprocessing.Process(target=self._run_script, args=(file_path,))
         new_process.start()
         file_processes[file_path] = new_process
          
@@ -62,7 +63,8 @@ class EventHandler(FileSystemEventHandler):
             process.join()
 
         except Exception as e:
-            print(f"Error terminating the process: {e}")
+            method_name = inspect.currentframe().f_back.f_code.co_name
+            logger.opt(exception=e).critical(f"Error terminating the process in {method_name}")
     
     def _is_exception_file(self, file_path: str) -> bool:
         exception_files = self.config_manager.get_exception_files()

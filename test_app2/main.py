@@ -6,13 +6,13 @@ def main() -> None:
         while True:
             print("Doing not so useful stuff...")
             time.sleep(5)
-    
+
     except KeyboardInterrupt:
         pass
 
     finally:
         print("Stopped doing something")
-        
-        
+
+
 if __name__ == "__main__":
     main()
