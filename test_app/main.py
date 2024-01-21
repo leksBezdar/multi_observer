@@ -1,9 +1,10 @@
 import time
 
+
 def main() -> None:
     try:
         while True:
-            logger.error("Doing some useful stuff...")
+            print("Doing some useful stuff...")
             time.sleep(5)
 
     except KeyboardInterrupt:

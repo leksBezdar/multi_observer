@@ -38,15 +38,18 @@ class EventHandler(FileSystemEventHandler):
                     self._kill_associated_processes(old_process)
 
             self._set_new_process(file_path)
-
-    def _set_new_process(self, file_path: str) -> None:  
-        new_process = multiprocessing.Process(target=self._run_script, args=(file_path,))
+    
+    @classmethod
+    def _set_new_process(cls, file_path: str) -> None:  
+        new_process = multiprocessing.Process(target=cls._run_script, args=(file_path,))
+        logger.debug(f"Setting new process for file {file_path}")
         new_process.start()
         file_processes[file_path] = new_process
          
     @staticmethod
     def _run_script(file_path: str) -> None:
         abs_path = os.path.abspath(file_path)
+        logger.debug(f"Running the script 'python {abs_path}'")
         subprocess.run(['python', abs_path])
 
     @staticmethod
@@ -67,5 +70,5 @@ class EventHandler(FileSystemEventHandler):
             logger.opt(exception=e).critical(f"Error terminating the process in {method_name}")
     
     def _is_exception_file(self, file_path: str) -> bool:
-        exception_files = self.config_manager.get_exception_files()
+        exception_files = self.config_manager.exception_files
         return file_path in exception_files

@@ -1,11 +1,10 @@
 import time
-from loguru import logger
 
 
 def main() -> None:
     try:
         while True:
-            logger.critical("You are doing something wrong!!!")
+            print("You are doing something wrong!!!")
             time.sleep(1)
 
     except KeyboardInterrupt:

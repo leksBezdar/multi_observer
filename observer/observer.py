@@ -13,11 +13,11 @@ def start_watching_files(config_file='config.txt'):
 
     try:
         logger.debug(f"Start watching files from {config_file}")
-        folders_to_watch = config_manager.get_folder_paths()
+        folders_to_watch = config_manager.folders_to_watch
         logger.debug(f"Got folders to watch: {folders_to_watch}")
         
         for folder_path in folders_to_watch:
-            logger.debug(f"Watvhing folder path: {folder_path}")
+            logger.debug(f"Watching folder path: {folder_path}")
             observer.schedule(EventHandler(config_manager), os.path.dirname(folder_path), recursive=False)
 
         observer.start()
