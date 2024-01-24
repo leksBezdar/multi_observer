@@ -1,3 +1,4 @@
 [Folders]
 Paths: test_app/, test_app2/
 Exception_files: test_app\exception_main.py
+Files_to_reload: test_app\main.py, test_app2\main.py

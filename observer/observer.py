@@ -1,8 +1,9 @@
-import inspect
 import os
+import inspect
 
 from watchdog.observers import Observer
 from loguru import logger
+
 from event_handler import EventHandler
 from config import ConfigManager
 

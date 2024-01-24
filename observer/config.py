@@ -25,6 +25,7 @@ class FileManager:
         self.project_root = os.path.abspath('.')
         self.folders_to_watch = self._get_folder_paths()
         self.exception_files = self._get_exception_files()
+        self.files_to_reload = self._get_files_to_reload()
 
     def _get_folder_paths(self) -> list:
         logger.debug("Getting folder paths")
@@ -100,6 +101,22 @@ class FileManager:
             logger.opt(exception=e).critical(
                 "Failed to get valid folder files")
 
+    def _get_files_to_reload(self) -> list:
+        logger.debug("Getting files to reload")
+
+        try:
+            if 'Folders' in self.config:
+                logger.debug(f"Project root: {self.project_root}")
+
+                config_files_to_reload = self.config['Folders']['Files_to_reload'].split(',')
+                files_to_reload = [os.path.join(self.project_root, file.strip()) for file in config_files_to_reload]
+                logger.debug(f"Files_to_update: {files_to_reload}")
+
+                return files_to_reload
+            return []
+        
+        except Exception as e:
+            logger.opt(exception=e).critical("Failed to get files to update")
 
 class ConfigManager:
     
@@ -116,3 +133,6 @@ class ConfigManager:
     
     def get_exception_files(self):
         return self.file_manager.exception_files
+    
+    def get_files_to_reload(self):
+        return self.file_manager.files_to_reload

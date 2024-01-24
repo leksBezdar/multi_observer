@@ -1,9 +1,9 @@
 import os
 import psutil
 import inspect
-
 import subprocess
 import multiprocessing
+
 from loguru import logger
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 
@@ -23,21 +23,24 @@ class EventHandler(FileSystemEventHandler):
             file_path = event.src_path
             logger.debug(f"file {file_path} modified")
 
-            # Пропуск исключенных файлов
             if self._is_exception_file(file_path):
                 logger.debug(f"file {file_path} is excluded")
                 return
 
-            logger.debug(f'File {file_path} has been modified. Reloading...')
+            if self._is_file_to_reload(file_path):
+                self._reload_file(file_path)
 
-            if file_path in file_processes:
-                old_process = file_processes[file_path]
+    def _reload_file(self, file_path: str) -> None:  
+        logger.debug(f'File {file_path} has been modified. Reloading...')
 
-                if old_process.is_alive():
-                    logger.debug(f'Terminating previous processes for file {file_path}')
-                    self._kill_associated_processes(old_process)
+        if file_path in file_processes:
+            old_process = file_processes[file_path]
 
-            self._set_new_process(file_path)
+            if old_process.is_alive():
+                logger.debug(f'Terminating previous processes for file {file_path}')
+                self._kill_associated_processes(old_process)
+
+        self._set_new_process(file_path)
     
     @classmethod
     def _set_new_process(cls, file_path: str) -> None:  
@@ -72,3 +75,7 @@ class EventHandler(FileSystemEventHandler):
     def _is_exception_file(self, file_path: str) -> bool:
         exception_files = self.config_manager.get_exception_files()
         return file_path in exception_files
+
+    def _is_file_to_reload(self, file_path: str) -> bool:
+        files_to_reload = self.config_manager.get_files_to_reload()
+        return file_path in files_to_reload

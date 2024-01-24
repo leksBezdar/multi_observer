@@ -1,4 +1,5 @@
 from loguru import logger
+
 from observer import start_watching_files
 
 
