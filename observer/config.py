@@ -4,13 +4,11 @@ import configparser
 from loguru import logger
 
 
-class ConfigManager:
+class ConfigLoader:
     def __init__(self, config_file: str):
         self.config = configparser.ConfigParser()
         self.config_file = config_file
         self._load_config()
-        self.folders_to_watch = self._get_folder_paths()
-        self.exception_files = self._get_exception_files()
 
     def _load_config(self) -> None:
         logger.debug("Loading config")
@@ -20,16 +18,23 @@ class ConfigManager:
         except Exception as e:
             logger.opt(exception=e).critical("Failed to load config")
 
+
+class FileManager:
+    def __init__(self, config: configparser.ConfigParser):
+        self.config = config
+        self.project_root = os.path.abspath('.')
+        self.folders_to_watch = self._get_folder_paths()
+        self.exception_files = self._get_exception_files()
+
     def _get_folder_paths(self) -> list:
         logger.debug("Getting folder paths")
 
         try:
             if 'Folders' in self.config:
-                project_root = os.path.abspath('.')
-                logger.debug(f"Project root: {project_root}")
+                logger.debug(f"Project root: {self.project_root}")
 
                 config_folders = self.config['Folders']['Paths'].split(',')
-                abs_paths_folders_to_watch = [os.path.join(project_root, folder.strip()) for folder in config_folders]
+                abs_paths_folders_to_watch = [os.path.join(self.project_root, folder.strip()) for folder in config_folders]
                 logger.debug(f"Folders to watch: {abs_paths_folders_to_watch}")
 
                 return abs_paths_folders_to_watch
@@ -62,8 +67,7 @@ class ConfigManager:
             target_files = []
 
             for folder_path in cls.folders_to_watch:
-                logger.debug(
-                    f"Start getting target files from folder {folder_path}")
+                logger.debug(f"Start getting target files from folder {folder_path}")
                 valid_files = cls._get_valid_folder_files(folder_path)
 
                 target_files.extend(valid_files)
@@ -95,3 +99,20 @@ class ConfigManager:
         except Exception as e:
             logger.opt(exception=e).critical(
                 "Failed to get valid folder files")
+
+
+class ConfigManager:
+    
+    def __init__(self, config_file: str):
+        self.config_file = config_file
+        self.config_loader = ConfigLoader(config_file)
+        self.file_manager = FileManager(self.config_loader.config)
+        
+    def get_target_files(self):
+        return self.file_manager.get_target_files()
+    
+    def get_folders_to_watch(self):
+        return self.file_manager.folders_to_watch
+    
+    def get_exception_files(self):
+        return self.file_manager.exception_files

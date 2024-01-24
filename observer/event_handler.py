@@ -70,5 +70,5 @@ class EventHandler(FileSystemEventHandler):
             logger.opt(exception=e).critical(f"Error terminating the process in {method_name}")
     
     def _is_exception_file(self, file_path: str) -> bool:
-        exception_files = self.config_manager.exception_files
+        exception_files = self.config_manager.get_exception_files()
         return file_path in exception_files
